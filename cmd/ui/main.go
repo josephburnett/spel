@@ -1,18 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"syscall/js"
-
-	"github.com/josephburnett/spel/pkg/word"
+	"github.com/josephburnett/spel/pkg/app"
+	"github.com/josephburnett/spel/pkg/view"
 )
 
 func main() {
-	doc := js.Global().Get("document")
-	app := doc.Call("getElementById", "app")
-	mutants, err := word.MutateTimes("testing", 10)
+	s, err := app.NewSpel([]string{"testing"})
 	if err != nil {
 		panic(err)
 	}
-	app.Set("innerHTML", fmt.Sprintf("%v", mutants))
+	err = view.Render(s.Options(), s.Score())
+	if err != nil {
+		panic(err)
+	}
 }
