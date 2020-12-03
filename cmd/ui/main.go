@@ -9,23 +9,15 @@ import (
 	"github.com/josephburnett/spel/pkg/app"
 )
 
+var defaultWords = []string{
+	"thinking",
+	"coding",
+	"testing",
+	"showing",
+}
+
 func main() {
-	resp, err := http.Get("words.txt")
-	if err != nil {
-		panic(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	words := []string{}
-	for _, s := range strings.Split(string(body), "\n") {
-		if s == "" {
-			continue
-		}
-		words = append(words, s)
-	}
-	fmt.Printf("words: %v\n", words)
+	words := getWords()
 	s, err := app.NewSpel(words)
 	if err != nil {
 		panic(err)
@@ -34,4 +26,25 @@ func main() {
 		s.Render()
 		s.WaitClick()
 	}
+}
+
+func getWords() []string {
+	resp, err := http.Get("words.txt")
+	if err != nil {
+		fmt.Printf("error getting words.txt, using defaults: %v", err)
+		return defaultWords
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("error reading words.txt, using defaults: %v", err)
+		return defaultWords
+	}
+	words := []string{}
+	for _, s := range strings.Split(string(body), "\n") {
+		if s == "" {
+			continue
+		}
+		words = append(words, s)
+	}
+	return words
 }
