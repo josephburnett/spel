@@ -59,7 +59,7 @@ func (s *Spel) clickFn(word string) func(js.Value, []js.Value) interface{} {
 
 func (s *Spel) nextWord() error {
 	s.currentWord = s.words[rand.Intn(len(s.words))]
-	options, err := word.MutateTimes(s.currentWord, 8)
+	options, err := word.MutateTimes(s.currentWord, 5)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (s *Spel) Render() {
 	app.Call("appendChild", top)
 
 	ul := doc.Call("createElement", "ul")
-	ul.Set("style", "width:300px;float:left;font-size:2em;clear:left")
+	ul.Set("style", "width:300px;float:left;font-size:2em;clear:left;line-height:2em")
 	var words []string
 	if s.preview {
 		words = s.words

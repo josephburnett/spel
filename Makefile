@@ -7,3 +7,6 @@ build :
 
 serve : build
 	cd resources ; python -m SimpleHTTPServer 8000
+
+deploy : build
+	gsutil -m cp -r resources/* gs://apps.nixy.io/spel/
