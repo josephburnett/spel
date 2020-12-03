@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"syscall/js"
@@ -35,6 +36,9 @@ func (s *Spel) clickFn(word string) func(js.Value, []js.Value) interface{} {
 			s.nextWord()
 		} else {
 			s.score -= 1
+			if s.score < 0 {
+				s.score = 0
+			}
 		}
 		s.click <- struct{}{}
 		return nil
@@ -56,6 +60,7 @@ func (s *Spel) nextWord() error {
 func (s *Spel) Render() {
 	doc := js.Global().Get("document")
 	app := doc.Call("getElementById", "app")
+	score := doc.Call("createTextNode", fmt.Sprintf("Score: %v", s.score))
 	ul := doc.Call("createElement", "ul")
 	for _, word := range s.options {
 		li := doc.Call("createElement", "li")
@@ -65,6 +70,7 @@ func (s *Spel) Render() {
 		ul.Call("appendChild", li)
 	}
 	app.Set("innerHTML", "")
+	app.Call("appendChild", score)
 	app.Call("appendChild", ul)
 }
 
