@@ -16,6 +16,8 @@ type Spel struct {
 	options     []string
 	score       int
 	click       chan struct{}
+	newCat      bool
+	catWidth    int
 }
 
 func NewSpel(words []string) (*Spel, error) {
@@ -39,6 +41,7 @@ func (s *Spel) clickFn(word string) func(js.Value, []js.Value) interface{} {
 			if s.score < 0 {
 				s.score = 0
 			}
+			s.catWidth = s.catWidth / 2
 		}
 		s.click <- struct{}{}
 		return nil
@@ -54,14 +57,26 @@ func (s *Spel) nextWord() error {
 	options = append(options, s.currentWord)
 	rand.Shuffle(len(options), func(i, j int) { options[i], options[j] = options[j], options[i] })
 	s.options = options
+	s.catWidth = 500
+	s.newCat = true
 	return nil
 }
 
 func (s *Spel) Render() {
 	doc := js.Global().Get("document")
 	app := doc.Call("getElementById", "app")
-	score := doc.Call("createTextNode", fmt.Sprintf("Score: %v", s.score))
+	app.Set("style", "float:left;")
+	app.Set("innerHTML", "")
+
+	top := doc.Call("createElement", "div")
+	top.Set("style", "float:left;clear:both;height:100px")
+	title := doc.Call("createElement", "h1")
+	title.Set("innerHTML", fmt.Sprintf("Score: %v", s.score))
+	top.Call("appendChild", title)
+	app.Call("appendChild", top)
+
 	ul := doc.Call("createElement", "ul")
+	ul.Set("style", "width:300px;float:left;font-size:2em;clear:left")
 	for _, word := range s.options {
 		li := doc.Call("createElement", "li")
 		li.Set("onclick", js.FuncOf(s.clickFn(word)))
@@ -69,9 +84,22 @@ func (s *Spel) Render() {
 		li.Call("appendChild", text)
 		ul.Call("appendChild", li)
 	}
-	app.Set("innerHTML", "")
-	app.Call("appendChild", score)
 	app.Call("appendChild", ul)
+
+	style := fmt.Sprintf("width:%vpx;float:left", s.catWidth)
+	if s.newCat {
+		cat := doc.Call("getElementById", "cat")
+		catImg := doc.Call("createElement", "img")
+		catImg.Set("src", fmt.Sprintf("https://cataas.com/cat?fresh=%v", rand.Int()))
+		catImg.Set("id", "cat-image")
+		catImg.Set("style", style)
+		cat.Set("innerHTML", "")
+		cat.Call("appendChild", catImg)
+		s.newCat = false
+	} else {
+		catImg := doc.Call("getElementById", "cat-image")
+		catImg.Set("style", style)
+	}
 }
 
 func (s *Spel) WaitClick() {
