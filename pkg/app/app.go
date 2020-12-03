@@ -3,6 +3,7 @@ package app
 import (
 	"math/rand"
 	"sync"
+	"syscall/js"
 
 	"github.com/josephburnett/spel/pkg/word"
 )
@@ -13,18 +14,20 @@ type Spel struct {
 	currentWord string
 	options     []string
 	score       int
+	click       chan struct{}
 }
 
 func NewSpel(words []string) (*Spel, error) {
 	s := &Spel{
 		words: words,
+		click: make(chan struct{}),
 	}
 	s.nextWord()
 	return s, nil
 }
 
-func (s *Spel) ClickFn(word string) func() {
-	return func() {
+func (s *Spel) clickFn(word string) func(js.Value, []js.Value) interface{} {
+	return func(_ js.Value, _ []js.Value) interface{} {
 		s.mux.Lock()
 		defer s.mux.Unlock()
 		if word == s.currentWord {
@@ -33,6 +36,8 @@ func (s *Spel) ClickFn(word string) func() {
 		} else {
 			s.score -= 1
 		}
+		s.click <- struct{}{}
+		return nil
 	}
 }
 
@@ -48,14 +53,21 @@ func (s *Spel) nextWord() error {
 	return nil
 }
 
-func (s *Spel) Options() []string {
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	return s.options
+func (s *Spel) Render() {
+	doc := js.Global().Get("document")
+	app := doc.Call("getElementById", "app")
+	ul := doc.Call("createElement", "ul")
+	for _, word := range s.options {
+		li := doc.Call("createElement", "li")
+		li.Set("onclick", js.FuncOf(s.clickFn(word)))
+		text := doc.Call("createTextNode", word)
+		li.Call("appendChild", text)
+		ul.Call("appendChild", li)
+	}
+	app.Set("innerHTML", "")
+	app.Call("appendChild", ul)
 }
 
-func (s *Spel) Score() int {
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	return s.score
+func (s *Spel) WaitClick() {
+	<-s.click
 }
