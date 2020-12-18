@@ -34,6 +34,10 @@ func getWords() []string {
 		fmt.Printf("error getting words.txt, using defaults: %v", err)
 		return defaultWords
 	}
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("non ok status code getting words.txt, using defaults: %v", resp.StatusCode)
+		return defaultWords
+	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("error reading words.txt, using defaults: %v", err)

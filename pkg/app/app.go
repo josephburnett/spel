@@ -16,6 +16,7 @@ type Spel struct {
 	currentWord string
 	options     []string
 	score       int
+	delta       int
 	click       chan struct{}
 	newCat      bool
 	catWidth    int
@@ -45,9 +46,11 @@ func (s *Spel) clickFn(word string) func(js.Value, []js.Value) interface{} {
 		}
 		if word == s.currentWord {
 			s.score += 3
+			s.delta = 3
 			s.nextWord()
 		} else {
 			s.score -= 1
+			s.delta = -1
 			if s.score < 0 {
 				s.score = 0
 			}
@@ -83,16 +86,29 @@ func (s *Spel) Render() {
 	top := doc.Call("createElement", "div")
 	top.Set("style", "float:left;clear:both;height:100px")
 	title := doc.Call("createElement", "h1")
+	instructions := doc.Call("createElement", "h3")
 	if s.preview {
-		title.Set("innerHTML", fmt.Sprintf("These are your words"))
+		title.Set("innerHTML", "These are your words")
+		instructions.Set("innerHTML", "Press any word to begin")
 	} else {
-		title.Set("innerHTML", fmt.Sprintf("Score: %v", s.score))
+		score := fmt.Sprintf("Score: %v", s.score)
+		if s.delta > 0 {
+			score += fmt.Sprintf(" (+%v)", s.delta)
+			title.Set("style", "color:green")
+		}
+		if s.delta < 0 {
+			score += fmt.Sprintf(" (%v)", s.delta)
+			title.Set("style", "color:red")
+		}
+		title.Set("innerHTML", score)
+		instructions.Set("innerHTML", "Press the correctly spelled word")
 	}
 	top.Call("appendChild", title)
+	top.Call("appendChild", instructions)
 	app.Call("appendChild", top)
 
 	ul := doc.Call("createElement", "ul")
-	ul.Set("style", "width:300px;float:left;font-size:2em;clear:left;line-height:2em")
+	ul.Set("style", "width:350px;float:left;font-size:2em;clear:left;line-height:2em")
 	var words []string
 	if s.preview {
 		words = s.words
