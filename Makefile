@@ -10,3 +10,4 @@ serve : build
 
 deploy : build
 	gsutil -m cp -r resources/* gs://apps.nixy.io/spel/
+	gsutil -m cp -r resources/* gs://apps.nixy.io/spel/c/
